@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Página offline do Controle de Gastos: sem conexão, nenhuma operação financeira pode ser confirmada.">
+  <title>Sem conexão — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <!-- Recursos existentes do projeto (sem duplicação); a mensagem principal
+       não depende de consulta ao Supabase: esta página é 100% estática. -->
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+<body class="auth-pagina auth-pagina--simples">
+
+  <div class="auth-shell">
+
+    <!-- ===================== PAINEL DE MARCA (compacto) ===================== -->
+    <section class="auth-marca">
+      <p class="marca">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="48" height="48">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+          <span class="marca-sub">Machado Scripts</span>
+        </span>
+      </p>
+      <h1 class="auth-slogan">Seu lugar de controle de dívidas</h1>
+    </section>
+
+    <!-- ===================== CARTÃO OFFLINE ===================== -->
+    <main class="cartao" aria-labelledby="titulo-offline">
+      <h2 id="titulo-offline">Você está sem conexão</h2>
+      <p class="subtitulo">
+        Não foi possível carregar seus dados. Verifique a internet ou tente novamente.
+      </p>
+
+      <p class="mensagem mensagem-aviso" role="alert">
+        <strong>Atenção:</strong> pagamentos, cadastros e qualquer alteração financeira
+        não podem ser confirmados sem conexão. Nenhuma operação é realizada enquanto
+        você estiver offline — nada é salvo “depois” automaticamente.
+      </p>
+
+      <button type="button" class="botao" onclick="window.location.reload()">
+        Tentar novamente
+      </button>
+
+      <p class="rodape">
+        Esta tela não exibe dados financeiros — seus registros permanecem salvos no
+        banco de dados e voltam a aparecer quando a conexão retornar.
+      </p>
+    </main>
+  </div>
+
+  <noscript>
+    <p style="max-width:430px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Sem conexão e sem JavaScript, o botão “Tentar novamente” não funciona —
+      recarregue a página manualmente quando a internet voltar.
+    </p>
+  </noscript>
+</body>
+</html>

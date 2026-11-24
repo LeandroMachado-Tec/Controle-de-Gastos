@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Recupere o acesso à sua conta do Controle de Gastos: enviaremos um link seguro de redefinição de senha.">
+  <title>Recuperar senha — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+<body class="auth-pagina auth-pagina--simples" data-pagina="recuperar-senha">
+
+  <div class="auth-shell">
+
+    <!-- ===================== PAINEL DE MARCA (compacto) ===================== -->
+    <section class="auth-marca">
+      <p class="marca">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="48" height="48">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+          <span class="marca-sub">Machado Scripts</span>
+        </span>
+      </p>
+      <h1 class="auth-slogan">Seu lugar de controle de dívidas</h1>
+    </section>
+
+    <!-- ===================== CARTÃO DE RECUPERAÇÃO ===================== -->
+    <main class="cartao" aria-labelledby="titulo-pagina">
+      <h2 id="titulo-pagina">Recuperar senha</h2>
+      <p class="subtitulo">
+        Informe o e-mail da sua conta e enviaremos um link seguro para você criar uma nova senha.
+      </p>
+
+      <!-- Área de mensagens: preenchida por js/auth.js (erro/sucesso/aviso) -->
+      <p id="mensagem" class="mensagem" role="alert" hidden></p>
+
+      <form id="form-recuperar" novalidate>
+        <div class="campo">
+          <label for="email">E-mail cadastrado</label>
+          <div class="controle">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="voce@exemplo.com"
+              autocomplete="email"
+              autocapitalize="none"
+              spellcheck="false"
+              inputmode="email"
+              enterkeyhint="send"
+              required>
+          </div>
+          <p class="dica">Use o mesmo e-mail com o qual você criou a conta.</p>
+        </div>
+
+        <button type="submit" id="btn-recuperar" class="botao">Enviar link de recuperação</button>
+      </form>
+
+      <nav class="links" aria-label="Navegação">
+        <a href="login.html">Voltar para o login</a>
+        <a href="cadastro.html">Não tenho conta — <strong>criar agora</strong></a>
+      </nav>
+
+      <p class="rodape">
+        O link de redefinição é pessoal e expira após um curto período. Ninguém consegue
+        acessar sua conta apenas sabendo que este e-mail existe.
+      </p>
+    </main>
+  </div>
+
+  <noscript>
+    <p style="max-width:430px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para funcionar com segurança.
+    </p>
+  </noscript>
+
+  <!-- Carrega as credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+    Controlador da página (js/auth.js → iniciarRecuperarSenha):
+    • valida o e-mail antes do envio;
+    • chama solicitarRecuperacaoSenha() (Supabase Auth real, com redirectTo
+      para redefinir-senha.html);
+    • exibe mensagem de sucesso GENÉRICA (não revela se o e-mail existe),
+      orientando a verificar a caixa de entrada e o spam;
+    • botão com "Aguarde…" + spinner (aria-busy) e trava contra envio duplicado;
+    • erros reais (rede, limite de envio) são exibidos em português.
+  -->
+  <script type="module" src="./js/auth.js"></script>
+</body>
+</html>

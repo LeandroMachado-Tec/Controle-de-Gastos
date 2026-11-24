@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Entre na sua conta do Controle de Gastos para acompanhar dívidas, gastos e vencimentos.">
+  <title>Entrar — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <!-- Estilos compartilhados pelas páginas de autenticação -->
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+<body class="auth-pagina" data-pagina="login">
+
+  <div class="auth-shell">
+
+    <!-- ===================== PAINEL DE MARCA ===================== -->
+    <section class="auth-marca">
+      <p class="marca">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="48" height="48">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+          <span class="marca-sub">Machado Scripts</span>
+        </span>
+      </p>
+
+      <h1 class="auth-slogan">Seu lugar de controle de dívidas</h1>
+      <p class="auth-descricao">
+        Acompanhe dívidas, gastos, parcelas e vencimentos em um só lugar —
+        com todos os cálculos confirmados pelo seu banco de dados.
+      </p>
+
+      <ul class="auth-recursos">
+        <li>Painel com indicadores e gráficos do período escolhido</li>
+        <li>Dívidas mensais, anuais e eventuais com competências independentes</li>
+        <li>Parcelas com pagamento individual e histórico completo</li>
+      </ul>
+
+      <p class="auth-assinatura">Machado Scripts</p>
+    </section>
+
+    <!-- ===================== CARTÃO DE ACESSO ===================== -->
+    <main class="cartao" aria-labelledby="titulo-pagina">
+      <h2 id="titulo-pagina">Entrar na sua conta</h2>
+      <p class="subtitulo">Acompanhe suas dívidas, gastos e vencimentos com segurança.</p>
+
+      <!-- Área de mensagens: preenchida por js/auth.js (erro/sucesso/aviso) -->
+      <p id="mensagem" class="mensagem" role="alert" hidden></p>
+
+      <form id="form-login" novalidate>
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <div class="controle">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="voce@exemplo.com"
+              autocomplete="email"
+              autocapitalize="none"
+              spellcheck="false"
+              enterkeyhint="next"
+              required>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div class="controle com-alternar">
+            <input
+              type="password"
+              id="senha"
+              name="senha"
+              placeholder="Sua senha"
+              autocomplete="current-password"
+              enterkeyhint="go"
+              required>
+            <button
+              type="button"
+              id="btn-alternar-senha"
+              class="alternar-senha"
+              aria-pressed="false"
+              aria-label="Mostrar senha">Mostrar</button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-entrar" class="botao">Entrar</button>
+      </form>
+
+      <nav class="links" aria-label="Acesso e recuperação de conta">
+        <a href="recuperar-senha.html" data-carrega-next>Esqueci minha senha</a>
+        <a href="cadastro.html" data-carrega-next>Não tenho conta — <strong>criar agora</strong></a>
+      </nav>
+
+      <p class="rodape">Machado Scripts · Controle de Gastos</p>
+    </main>
+  </div>
+
+  <noscript>
+    <p style="max-width:430px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para funcionar com segurança.
+    </p>
+  </noscript>
+
+  <!-- Carrega as credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!-- Controlador da página: valida, impede envio duplicado, autentica e redireciona -->
+  <script type="module" src="./js/auth.js"></script>
+
+  <script type="module">
+    // Recursos exclusivos desta página (fora do escopo de js/auth.js):
+    // 1) mostrar/ocultar senha; 2) propagar ?next= para os links internos.
+    const campoSenha = document.getElementById('senha');
+    const btnAlternar = document.getElementById('btn-alternar-senha');
+
+    if (btnAlternar && campoSenha) {
+      btnAlternar.addEventListener('click', () => {
+        const mostrar = campoSenha.type === 'password';
+        campoSenha.type = mostrar ? 'text' : 'password';
+        btnAlternar.textContent = mostrar ? 'Ocultar' : 'Mostrar';
+        btnAlternar.setAttribute('aria-pressed', String(mostrar));
+        btnAlternar.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+        campoSenha.focus();
+      });
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//')) {
+      document.querySelectorAll('a[data-carrega-next]').forEach((a) => {
+        const url = new URL(a.getAttribute('href'), window.location.href);
+        url.searchParams.set('next', next);
+        a.setAttribute('href', url.pathname + url.search);
+      });
+    }
+  </script>
+</body>
+</html>

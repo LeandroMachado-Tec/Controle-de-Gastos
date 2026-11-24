@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Área administrativa do Controle de Gastos: gestão de status de contas e log de auditoria.">
+  <title>Administração — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/navegacao.js" defer></script>
+</head>
+<body data-pagina="admin">
+
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="app">
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <header class="app-cabecalho">
+      <a class="marca marca-cabecalho" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="usuario-chip" id="usuario-chip" hidden>
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <span class="dados">
+          <span class="nome" id="usuario-nome">Carregando…</span>
+          <span class="papel" id="usuario-papel"></span>
+        </span>
+      </div>
+
+      <div class="acoes-cabecalho">
+        <button type="button" id="btn-tema" class="botao-icone"
+                disabled data-aguardando="js/admin.js"
+                aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <span class="icone icone-tema" aria-hidden="true"></span>
+          <span class="rotulo-botao">Tema</span>
+        </button>
+        <button type="button" id="btn-sair" class="botao-icone"
+                disabled data-aguardando="js/admin.js"
+                aria-label="Sair da conta">
+          <span class="icone icone-sair" aria-hidden="true"></span>
+          <span class="rotulo-botao">Sair</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== NAVEGAÇÃO LATERAL (desktop) ===================== -->
+    <nav class="navegacao-lateral" aria-label="Menu principal">
+      <a class="marca marca-lateral" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Principal</p>
+        <a class="item-nav" href="dashboard.html">
+          <span class="icone icone-painel" aria-hidden="true"></span> Painel
+        </a>
+        <a class="item-nav" href="dividas.html">
+          <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+        </a>
+        <a class="item-nav" href="gastos.html">
+          <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+        </a>
+        <a class="item-nav" href="parcelas.html">
+          <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+        </a>
+      </div>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Organização</p>
+        <a class="item-nav" href="calendario.html">
+          <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+        </a>
+        <a class="item-nav" href="historico.html">
+          <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+        </a>
+        <a class="item-nav" href="configuracoes.html">
+          <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+        </a>
+      </div>
+
+      <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+      <div class="nav-grupo" id="nav-admin-lateral"></div>
+
+      <div class="nav-rodape">
+        <p class="rodape-nav">A área administrativa ativa/inativa contas; os dados financeiros de cada usuário permanecem privados.</p>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTEÚDO ===================== -->
+    <main class="conteudo" id="conteudo">
+      <h1 class="titulo-pagina">Administração</h1>
+      <p class="subtitulo-pagina">
+        Gestão de status de contas e auditoria. As autorizações são aplicadas pelo servidor.
+      </p>
+
+      <!-- Bloqueio para não administradores (perfil comum) -->
+      <div id="estado-acesso-negado" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Acesso restrito ao administrador</p>
+        <p>Sua conta não possui o papel de administrador. Se acredita que isso é um erro,
+           procure um administrador do sistema.</p>
+        <a class="botao-secundario" href="dashboard.html">Voltar ao painel</a>
+      </div>
+
+      <!-- Estado de erro global -->
+      <div id="estado-erro-global" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Não foi possível carregar a administração</p>
+        <p id="erro-mensagem"></p>
+        <button type="button" class="botao-secundario" id="btn-tentar-novamente"
+                disabled data-aguardando="js/admin.js">Tentar novamente</button>
+      </div>
+
+      <!-- Conteúdo administrativo: revelado SOMENTE após requireAuth + role=admin -->
+      <div id="conteudo-admin" hidden>
+
+        <!-- ===================== USUÁRIOS ===================== -->
+        <section class="cartao-painel" aria-labelledby="titulo-usuarios">
+          <div class="painel-cabecalho">
+            <h2 class="painel-titulo" id="titulo-usuarios">Contas de usuários</h2>
+            <span class="texto-suave" id="contador-usuarios" aria-live="polite"></span>
+          </div>
+          <div class="painel-corpo">
+
+            <div class="barra-filtros" role="search" aria-label="Pesquisa de usuários">
+              <div class="campo-filtro" style="flex:2 1 220px">
+                <label for="campo-busca">Pesquisar (e-mail ou nome)</label>
+                <input type="search" id="campo-busca" maxlength="60"
+                       placeholder="Ex.: leandro@…" autocomplete="off">
+              </div>
+              <button type="button" class="botao-secundario botao-pequeno" id="btn-atualizar"
+                      disabled data-aguardando="js/admin.js">
+                <span class="icone icone-historico" aria-hidden="true"></span> Atualizar
+              </button>
+            </div>
+
+            <div class="tabela-responsiva" id="tabela-usuarios">
+              <table>
+                <caption class="sr-only">Contas de usuários com status e papel</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Usuário</th>
+                    <th scope="col">Papel</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Criada em</th>
+                    <th scope="col">Último acesso</th>
+                    <th scope="col">Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="corpo-usuarios">
+                  <tr>
+                    <td colspan="6">
+                      <div class="carregando-painel" role="status" aria-label="Carregando usuários">
+                        <span class="esqueleto-linha" style="width:80%"></span>
+                        <span class="esqueleto-linha" style="width:55%"></span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="estado-vazio-usuarios" class="estado-vazio" hidden>
+              <span class="icone-estado" aria-hidden="true"></span>
+              <p class="titulo-estado">Nenhum usuário encontrado</p>
+              <p>Ajuste a pesquisa e tente novamente.</p>
+            </div>
+
+            <div class="modal-acoes" style="justify-content:space-between">
+              <button type="button" class="botao-secundario botao-pequeno" id="btn-pagina-anterior"
+                      disabled data-aguardando="js/admin.js">
+                <span class="icone icone-esquerda" aria-hidden="true"></span> Anterior
+              </button>
+              <span class="texto-suave" id="info-paginacao"></span>
+              <button type="button" class="botao-secundario botao-pequeno" id="btn-pagina-seguinte"
+                      disabled data-aguardando="js/admin.js">
+                Próxima <span class="icone icone-direita" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== AUDITORIA ===================== -->
+        <section class="cartao-painel" aria-labelledby="titulo-auditoria">
+          <div class="painel-cabecalho">
+            <h2 class="painel-titulo" id="titulo-auditoria">Log de auditoria</h2>
+            <span class="texto-suave">Ações administrativas registradas pelo banco</span>
+          </div>
+          <div class="painel-corpo">
+            <ul class="lista-lancamentos" id="lista-auditoria">
+              <li class="carregando-painel" role="status" aria-label="Carregando auditoria">
+                <span class="esqueleto-linha" style="width:85%"></span>
+                <span class="esqueleto-linha" style="width:60%"></span>
+              </li>
+            </ul>
+            <div class="modal-acoes">
+              <button type="button" class="botao-secundario botao-pequeno" id="btn-mais-auditoria"
+                      disabled data-aguardando="js/admin.js" hidden>Carregar mais</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR (celular) ===================== -->
+    <nav class="navegacao-inferior" aria-label="Menu principal">
+      <a class="item-nav" href="dashboard.html">
+        <span class="icone icone-painel" aria-hidden="true"></span> Painel
+      </a>
+      <a class="item-nav" href="dividas.html">
+        <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+      </a>
+      <a class="item-nav" href="gastos.html">
+        <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+      </a>
+      <a class="item-nav" href="parcelas.html">
+        <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+      </a>
+      <button type="button" id="btn-mais" class="item-nav"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-mais">
+        <span class="icone icone-mais" aria-hidden="true"></span> Mais
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== FOLHA "MAIS" (celular) ===================== -->
+  <div class="menu-mais-fundo" id="menu-mais" hidden>
+    <div class="menu-mais" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-mais">
+      <div class="menu-mais-cabecalho">
+        <h2 id="titulo-menu-mais">Mais</h2>
+        <button type="button" id="btn-fechar-mais" class="botao-icone" aria-label="Fechar menu">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul class="menu-mais-lista">
+        <li>
+          <a class="item-nav" href="calendario.html">
+            <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="historico.html">
+            <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="configuracoes.html">
+            <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+          </a>
+        </li>
+        <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+        <li id="menu-mais-admin"></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: CONFIRMAR MUDANÇA DE STATUS ===================== -->
+  <div class="modal-fundo" id="modal-status" role="dialog" aria-modal="true"
+       aria-labelledby="titulo-modal-status" hidden>
+    <div class="modal">
+      <div class="modal-cabecalho">
+        <h2 class="painel-titulo" id="titulo-modal-status">Alterar status da conta</h2>
+        <button type="button" class="botao-icone" id="btn-fechar-status"
+                aria-label="Fechar sem alterar">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <p id="status-resumo"></p>
+      <p class="dica-campo">
+        Contas inativas perdem imediatamente o acesso aos recursos financeiros
+        (bloqueio aplicado pelo banco). O motivo fica registrado no log de auditoria.
+      </p>
+
+      <div class="campo">
+        <label for="campo-motivo">Motivo <span class="texto-suave">(obrigatório para desativação)</span></label>
+        <textarea id="campo-motivo" maxlength="300" rows="2"
+                  placeholder="Ex.: solicitação do usuário; conta de teste encerrada"></textarea>
+      </div>
+
+      <p id="mensagem-status" class="mensagem" role="alert" hidden></p>
+
+      <div class="modal-acoes">
+        <button type="button" class="botao-secundario" id="btn-cancelar-status">Cancelar</button>
+        <button type="button" class="botao-perigo" id="btn-confirmar-status">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts de feedback -->
+  <div class="area-toasts" id="area-toasts" aria-live="polite"></div>
+
+  <noscript>
+    <p style="max-width:600px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para funcionar com segurança.
+    </p>
+  </noscript>
+
+  <!-- Credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+  =============================================================================
+  js/admin.js — contratos reais utilizados:
+    requireAuth() → { user, perfil } — gate de papel ANTES de qualquer RPC.
+    callRpc('admin_list_users', { p_search, p_limit, p_offset })
+      → tabela (id, email, full_name, status, role, created_at, last_login_at);
+        busca por e-mail/nome (ilike); limite real ≤ 200; erro 42501 se não admin.
+    callRpc('admin_set_account_status', { p_user, p_status, p_reason })
+      → { id, status, changed }; bloqueia auto-inativação (P0001);
+        grava registro em admin_audit_log.
+    admin_audit_log: leitura via PostgREST (RLS: somente admins) + perfis para
+      resolver e-mails de ator/alvo (policy profiles_select_admin).
+  Dados financeiros de terceiros NUNCA são exibidos (RLS impede).
+  =============================================================================
+  -->
+  <script type="module" src="./js/admin.js"></script>
+</body>
+</html>

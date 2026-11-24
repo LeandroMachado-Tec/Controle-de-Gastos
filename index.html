@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Controle de Gastos — verificação de acesso e confirmação de e-mail.">
+  <title>Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+<body class="auth-pagina auth-pagina--simples">
+
+  <div class="auth-shell">
+
+    <!-- ===================== PAINEL DE MARCA (compacto) ===================== -->
+    <section class="auth-marca">
+      <p class="marca">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="48" height="48">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+          <span class="marca-sub">Machado Scripts</span>
+        </span>
+      </p>
+      <h1 class="auth-slogan">Seu lugar de controle de dívidas</h1>
+    </section>
+
+    <!-- ===================== CARTÃO DE ROTEAMENTO ===================== -->
+    <main class="cartao" aria-labelledby="titulo-pagina">
+      <h2 id="titulo-pagina">Verificando seu acesso</h2>
+      <p class="subtitulo">Aguarde um instante enquanto confirmamos sua identidade.</p>
+
+      <!-- Requisito 10: indicador de carregamento durante as verificações -->
+      <div id="estado-carregando" class="carregando" role="status" aria-live="polite">
+        Verificando…
+      </div>
+
+      <!-- Estados de resultado (erro / conta inativa): mensagem + ações -->
+      <div id="estado-resultado" hidden>
+        <p id="mensagem" class="mensagem" role="alert"></p>
+        <nav class="acoes" aria-label="Próximos passos">
+          <a href="login.html" id="acao-login">Ir para o login</a>
+          <a href="recuperar-senha.html" id="acao-recuperar">Não consigo acessar — recuperar senha</a>
+        </nav>
+      </div>
+
+      <p class="rodape">Esta tela apenas encaminha você para o lugar certo — nada é armazenado aqui.</p>
+    </main>
+  </div>
+
+  <noscript>
+    <p style="max-width:430px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para funcionar com segurança.
+    </p>
+  </noscript>
+
+  <!-- Carrega as credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+    =============================================================================
+    index.html — PONTO DE ENTRADA / DESTINO DA CONFIRMAÇÃO DE E-MAIL
+    =============================================================================
+    NÃO é o painel financeiro: apenas roteia (o painel é dashboard.html).
+
+    FLUXO
+      1. O Supabase (Auth → URL Configuration → Site URL) direciona o link de
+         confirmação para cá, com ?code=... (fluxo PKCE).
+      2. O SDK (js/config.js, detectSessionInUrl: true) troca o código por
+         sessão AUTOMATICAMENTE durante a inicialização do client — esta página
+         NÃO refaz a troca, apenas aguarda e valida o resultado (getSessao()).
+      3. Anti-reprocessamento:
+         • o código recebido é marcado em sessionStorage ("cg-code-<code>");
+         • se a página for recarregada com o MESMO código, ele é ignorado
+           (o SDK rejeitaria com "código já utilizado");
+         • após a checagem, a URL é limpa com history.replaceState, então
+           atualizar a página (F5) não reprocessa nada.
+      4. Roteamento pela conta REAL no banco:
+         • sem sessão            → login.html;
+         • sessão + conta ativa  → dashboard.html (via verificarConta(), que lê
+           public.profiles.status no banco);
+         • sessão + conta INATIVA→ logout() + aviso claro — o bloqueio definitivo
+           permanece no banco (RLS + is_active_user);
+         • ?error=... na URL (link expirado/uso duplo) → mensagem em português
+           com ações.
+    =============================================================================
+  -->
+  <script type="module">
+    import {
+      obterCliente,
+      getSessao,
+      verificarConta,
+      logout,
+      ContaInativaError,
+      normalizarErro
+    } from './js/supabase.js';
+
+    const estadoCarregando = document.getElementById('estado-carregando');
+    const estadoResultado = document.getElementById('estado-resultado');
+    const areaMensagem = document.getElementById('mensagem');
+    const acaoLogin = document.getElementById('acao-login');
+    const acaoRecuperar = document.getElementById('acao-recuperar');
+
+    function mostrarResultado(mensagem, { ocultarRecuperar = false } = {}) {
+      estadoCarregando.hidden = true;
+      estadoResultado.hidden = false;
+      areaMensagem.className = 'mensagem mensagem-erro';
+      areaMensagem.textContent = mensagem;
+      acaoRecuperar.hidden = ocultarRecuperar;
+    }
+
+    function redirecionar(url) {
+      window.location.replace(url); // replace: sem entrada residual no histórico
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const codigo = params.get('code');
+
+    (async function rotear() {
+      try {
+        // Não processar o mesmo código duas vezes.
+        if (codigo) {
+          const chave = 'cg-code-' + codigo;
+          if (window.sessionStorage.getItem(chave) === '1') {
+            mostrarResultado(
+              'Este link de confirmação já foi utilizado. Se a sua conta já está ' +
+              'ativa, basta entrar com seu e-mail e senha.',
+              { ocultarRecuperar: true }
+            );
+            acaoLogin.textContent = 'Ir para o login';
+            return;
+          }
+          window.sessionStorage.setItem(chave, '1');
+        }
+
+        // Aguarda client + SDK (e a troca PKCE automática do código, se houver).
+        await obterCliente();
+        const sessao = await getSessao();
+
+        // Limpa a URL APÓS a troca do código (F5 não reprocessa).
+        if (codigo || params.get('error')) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+
+        // Erros vindos do próprio Supabase no link (link expirado, uso duplo…).
+        const tipoErro = params.get('error') || params.get('error_code') || '';
+        const descricaoErro = params.get('error_description') || '';
+        if (!sessao && tipoErro) {
+          const msg = /already/i.test(tipoErro + ' ' + descricaoErro)
+            ? 'Este e-mail já foi confirmado. Você já pode entrar com sua senha.'
+            : /expired/i.test(tipoErro + ' ' + descricaoErro)
+              ? 'Este link de confirmação expirou. Entre com seu e-mail e senha; se precisar, use a recuperação de senha.'
+              : 'Não foi possível validar o link de confirmação. Tente entrar diretamente ou solicite um novo link.';
+          mostrarResultado(msg);
+          return;
+        }
+
+        // Sem sessão válida → login.
+        if (!sessao) {
+          redirecionar('login.html');
+          return;
+        }
+
+        // Status REAL da conta, lido no banco.
+        try {
+          await verificarConta(); // lança ContaInativaError se status != 'active'
+          redirecionar('dashboard.html');
+        } catch (erro) {
+          if (erro instanceof ContaInativaError) {
+            await logout(); // encerra a sessão; o banco mantém o bloqueio (RLS)
+            mostrarResultado(
+              erro.message + ' Você foi desconectado por segurança.',
+              { ocultarRecuperar: true }
+            );
+            acaoLogin.setAttribute('href', 'login.html?status=inativa');
+            acaoLogin.textContent = 'Voltar ao login';
+          } else {
+            throw erro;
+          }
+        }
+      } catch (erro) {
+        const traduzido = normalizarErro(erro);
+        mostrarResultado(
+          traduzido.message || 'Não foi possível verificar seu acesso. Tente novamente.'
+        );
+        console.error('[index] falha no roteamento:', traduzido.codigo, traduzido.message);
+      }
+    })();
+  </script>
+</body>
+</html>

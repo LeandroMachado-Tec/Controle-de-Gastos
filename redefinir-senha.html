@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Defina uma nova senha para a sua conta do Controle de Gastos com segurança.">
+  <title>Redefinir senha — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/auth.css">
+</head>
+<body class="auth-pagina auth-pagina--simples" data-pagina="redefinir-senha">
+
+  <div class="auth-shell">
+
+    <!-- ===================== PAINEL DE MARCA (compacto) ===================== -->
+    <section class="auth-marca">
+      <p class="marca">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="48" height="48">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+          <span class="marca-sub">Machado Scripts</span>
+        </span>
+      </p>
+      <h1 class="auth-slogan">Seu lugar de controle de dívidas</h1>
+    </section>
+
+    <!-- ===================== CARTÃO DE REDEFINIÇÃO ===================== -->
+    <main class="cartao" aria-labelledby="titulo-pagina">
+      <h2 id="titulo-pagina">Criar nova senha</h2>
+      <p class="subtitulo">Escolha uma nova senha para proteger a sua conta.</p>
+
+      <!-- Área de mensagens: preenchida por js/auth.js (erro/sucesso/aviso) -->
+      <p id="mensagem" class="mensagem" role="alert" hidden></p>
+
+      <!-- Estado 1: validando o link (revelado por padrão, oculto pelo auth.js) -->
+      <p id="estado-carregando" class="estado" role="status">
+        Validando seu link de segurança…
+      </p>
+
+      <!-- Estado 2: link inválido/expirado/sem sessão (revelado pelo auth.js) -->
+      <div id="estado-link-invalido" class="estado" role="alert" hidden>
+        <p style="margin:0 0 10px">
+          Este link de redefinição é <strong>inválido, expirou ou já foi utilizado</strong>.
+          Solicite um novo link para criar a sua nova senha.
+        </p>
+        <a href="recuperar-senha.html" style="color:var(--cor-primaria);font-weight:600">
+          Solicitar novo link
+        </a>
+      </div>
+
+      <!-- Estado 3: sessão de recuperação válida (revelado pelo auth.js) -->
+      <form id="form-redefinir" novalidate hidden>
+        <div class="campo">
+          <label for="senha">Nova senha</label>
+          <div class="controle com-alternar">
+            <input
+              type="password"
+              id="senha"
+              name="senha"
+              placeholder="Crie uma nova senha forte"
+              autocomplete="new-password"
+              minlength="8"
+              enterkeyhint="next"
+              required>
+            <button
+              type="button"
+              id="btn-alternar-senha"
+              class="alternar-senha"
+              aria-pressed="false"
+              aria-label="Mostrar nova senha">Mostrar</button>
+          </div>
+        </div>
+
+        <!-- Checklist atualizado em tempo real por js/auth.js (evento input de #senha) -->
+        <ul id="requisitos-senha" class="requisitos" aria-label="Requisitos da nova senha">
+          <li data-requisito="tamanho">Mínimo de 8 caracteres</li>
+          <li data-requisito="letra">Pelo menos 1 letra</li>
+          <li data-requisito="numero">Pelo menos 1 número</li>
+        </ul>
+
+        <!-- Barra de força (visual, controlada pelo script desta página) -->
+        <div class="forca" role="progressbar" aria-label="Força da nova senha"
+             aria-valuemin="0" aria-valuemax="3" aria-valuenow="0" id="barra-forca">
+          <span id="barra-forca-preenchimento"></span>
+        </div>
+        <p class="rotulo-forca" id="rotulo-forca" aria-live="polite">&nbsp;</p>
+
+        <div class="campo">
+          <label for="confirmar-senha">Confirmar nova senha</label>
+          <div class="controle com-alternar">
+            <input
+              type="password"
+              id="confirmar-senha"
+              name="confirmar-senha"
+              placeholder="Repita a nova senha"
+              autocomplete="new-password"
+              minlength="8"
+              enterkeyhint="go"
+              required>
+            <button
+              type="button"
+              id="btn-alternar-confirmacao"
+              class="alternar-senha"
+              aria-pressed="false"
+              aria-label="Mostrar confirmação da nova senha">Mostrar</button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-redefinir" class="botao">Salvar nova senha</button>
+      </form>
+
+      <nav class="links" aria-label="Navegação">
+        <a href="login.html">Voltar para o login</a>
+      </nav>
+
+      <p class="rodape">
+        Após salvar, você sai automaticamente e entra com a nova senha.
+      </p>
+    </main>
+  </div>
+
+  <noscript>
+    <p style="max-width:430px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para funcionar com segurança.
+    </p>
+  </noscript>
+
+  <!-- Carrega as credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+    Controlador da página (js/auth.js → iniciarRedefinirSenha):
+    • troca o "código" do link por sessão de recuperação (PKCE automático do SDK);
+    • valida a sessão ANTES de permitir a alteração (requisito 7);
+    • sem sessão válida → revela #estado-link-invalido (requisito 9);
+    • com sessão → revela o formulário e foca #senha;
+    • no envio: valida requisitos + igualdade das senhas, chama definirNovaSenha()
+      (Supabase Auth real), encerra a sessão (logout) e redireciona para
+      login.html?msg=senha-alterada (requisitos 6 e 10);
+    • botão com "Aguarde…" + spinner (aria-busy) e trava anti-duplicação (requisito 8).
+  -->
+  <script type="module" src="./js/auth.js"></script>
+
+  <script type="module">
+    // Recursos exclusivos desta página: alternar visibilidade das duas senhas
+    // e barra de força (o checklist é responsabilidade do js/auth.js).
+    function configurarAlternancia(campo, botao) {
+      if (!campo || !botao) return;
+      botao.addEventListener('click', () => {
+        const mostrar = campo.type === 'password';
+        campo.type = mostrar ? 'text' : 'password';
+        botao.textContent = mostrar ? 'Ocultar' : 'Mostrar';
+        botao.setAttribute('aria-pressed', String(mostrar));
+        botao.setAttribute('aria-label', mostrar
+          ? 'Ocultar ' + (campo.id === 'senha' ? 'nova senha' : 'confirmação da nova senha')
+          : 'Mostrar ' + (campo.id === 'senha' ? 'nova senha' : 'confirmação da nova senha'));
+        campo.focus();
+      });
+    }
+
+    const campoSenha = document.getElementById('senha');
+    const campoConfirmar = document.getElementById('confirmar-senha');
+    configurarAlternancia(campoSenha, document.getElementById('btn-alternar-senha'));
+    configurarAlternancia(campoConfirmar, document.getElementById('btn-alternar-confirmacao'));
+
+    // Barra de força: 0 a 5 pontos (tamanho 8+, tamanho 12+, letra, número, símbolo)
+    const preenchimento = document.getElementById('barra-forca-preenchimento');
+    const barra = document.getElementById('barra-forca');
+    const rotulo = document.getElementById('rotulo-forca');
+    const LETRA = /\p{L}/u, NUMERO = /\d/, SIMBOLO = /[^A-Za-z0-9]/;
+
+    function atualizarForca() {
+      const s = campoSenha.value;
+      let pontos = 0;
+      if (s.length >= 8) pontos++;
+      if (s.length >= 12) pontos++;
+      if (LETRA.test(s)) pontos++;
+      if (NUMERO.test(s)) pontos++;
+      if (SIMBOLO.test(s)) pontos++;
+
+      const niveis = {
+        fraca: { largura: '33%',  cor: 'var(--cor-erro)',    texto: 'Força: fraca', valor: 1 },
+        media: { largura: '66%',  cor: 'var(--cor-media)',   texto: 'Força: média', valor: 2 },
+        forte: { largura: '100%', cor: 'var(--cor-sucesso)', texto: 'Força: forte', valor: 3 }
+      };
+      const nivel = pontos <= 1 ? 'fraca' : pontos <= 3 ? 'media' : 'forte';
+      const cfg = niveis[nivel];
+
+      preenchimento.style.width = s.length === 0 ? '0' : cfg.largura;
+      preenchimento.style.background = cfg.cor;
+      barra.setAttribute('aria-valuenow', String(s.length === 0 ? 0 : cfg.valor));
+      rotulo.textContent = s.length === 0 ? '\u00a0' : cfg.texto;
+    }
+
+    campoSenha.addEventListener('input', atualizarForca);
+  </script>
+</body>
+</html>

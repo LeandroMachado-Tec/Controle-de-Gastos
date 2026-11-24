@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Histórico financeiro do Controle de Gastos: pagamentos, reversões e eventos das suas parcelas e competências.">
+  <title>Histórico — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/navegacao.js" defer></script>
+</head>
+<body data-pagina="historico">
+
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="app">
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <header class="app-cabecalho">
+      <a class="marca marca-cabecalho" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="usuario-chip" id="usuario-chip" hidden>
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <span class="dados">
+          <span class="nome" id="usuario-nome">Carregando…</span>
+          <span class="papel" id="usuario-papel"></span>
+        </span>
+      </div>
+
+      <div class="acoes-cabecalho">
+        <button type="button" id="btn-tema" class="botao-icone"
+                disabled data-aguardando="js/historico.js"
+                aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <span class="icone icone-tema" aria-hidden="true"></span>
+          <span class="rotulo-botao">Tema</span>
+        </button>
+        <button type="button" id="btn-sair" class="botao-icone"
+                disabled data-aguardando="js/historico.js"
+                aria-label="Sair da conta">
+          <span class="icone icone-sair" aria-hidden="true"></span>
+          <span class="rotulo-botao">Sair</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== NAVEGAÇÃO LATERAL (desktop) ===================== -->
+    <nav class="navegacao-lateral" aria-label="Menu principal">
+      <a class="marca marca-lateral" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Principal</p>
+        <a class="item-nav" href="dashboard.html">
+          <span class="icone icone-painel" aria-hidden="true"></span> Painel
+        </a>
+        <a class="item-nav" href="dividas.html">
+          <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+        </a>
+        <a class="item-nav" href="gastos.html">
+          <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+        </a>
+        <a class="item-nav" href="parcelas.html">
+          <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+        </a>
+      </div>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Organização</p>
+        <a class="item-nav" href="calendario.html">
+          <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+        </a>
+        <a class="item-nav ativo" href="historico.html" aria-current="page">
+          <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+        </a>
+        <a class="item-nav" href="configuracoes.html">
+          <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+        </a>
+      </div>
+
+      <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+      <div class="nav-grupo" id="nav-admin-lateral"></div>
+
+      <div class="nav-rodape">
+        <p class="rodape-nav">Somente leitura: o histórico é registrado automaticamente pelo banco.</p>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTEÚDO ===================== -->
+    <main class="conteudo" id="conteudo">
+      <h1 class="titulo-pagina">Histórico</h1>
+      <p class="subtitulo-pagina">
+        Pagamentos, reversões e eventos das suas parcelas e competências — registro automático do banco.
+      </p>
+
+      <!-- Estado de erro global (rede/sessão) -->
+      <div id="estado-erro-global" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Não foi possível carregar o histórico</p>
+        <p id="erro-mensagem"></p>
+        <button type="button" class="botao-secundario" id="btn-tentar-novamente"
+                disabled data-aguardando="js/historico.js">Tentar novamente</button>
+      </div>
+
+      <!-- ===================== FILTROS ===================== -->
+      <form class="barra-filtros" id="form-filtros" aria-label="Filtros do histórico">
+        <div class="campo-filtro">
+          <label for="filtro-de">De</label>
+          <input type="date" id="filtro-de">
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-ate">Até</label>
+          <input type="date" id="filtro-ate">
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-entidade">Tipo</label>
+          <!-- Valores REAIS do ENUM history_entity -->
+          <select id="filtro-entidade">
+            <option value="">Todos</option>
+            <option value="expense_installment">Parcelas de compras</option>
+            <option value="debt_occurrence">Competências de dívidas</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-acao">Ação</label>
+          <!-- Valores REAIS do ENUM history_action -->
+          <select id="filtro-acao">
+            <option value="">Todas</option>
+            <option value="paid">Pagamento</option>
+            <option value="reverted">Reversão de pagamento</option>
+            <option value="created">Criação</option>
+            <option value="updated">Atualização</option>
+            <option value="deleted">Exclusão</option>
+          </select>
+        </div>
+
+        <button type="submit" class="botao" id="btn-aplicar"
+                disabled data-aguardando="js/historico.js">Aplicar filtros</button>
+        <button type="button" class="botao-secundario botao-pequeno" id="btn-limpar-filtros"
+                disabled data-aguardando="js/historico.js">Limpar filtros</button>
+      </form>
+
+      <!-- ===================== TABELA ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-lista-historico">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-lista-historico">Registros</h2>
+          <span class="painel-acoes texto-suave" id="contador-historico" aria-live="polite"></span>
+        </div>
+        <div class="painel-corpo">
+
+          <div class="tabela-responsiva" id="tabela-historico">
+            <table>
+              <caption class="sr-only">Histórico de pagamentos e eventos financeiros</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Data/hora</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Ação</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col">Vencimento</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-historico">
+                <!-- Esqueleto inicial (nunca dados fictícios) -->
+                <tr>
+                  <td colspan="6">
+                    <div class="carregando-painel" role="status" aria-label="Carregando histórico">
+                      <span class="esqueleto-linha" style="width:85%"></span>
+                      <span class="esqueleto-linha" style="width:60%"></span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Estado vazio -->
+          <div id="estado-vazio-historico" class="estado-vazio" hidden>
+            <span class="icone-estado" aria-hidden="true"></span>
+            <p class="titulo-estado">Nenhum registro encontrado</p>
+            <p id="estado-vazio-dica">Ajuste os filtros ou registre pagamentos em Parcelas/Dívidas.</p>
+          </div>
+
+          <!-- Paginação -->
+          <div class="modal-acoes" style="justify-content:space-between">
+            <button type="button" class="botao-secundario botao-pequeno" id="btn-pagina-anterior"
+                    disabled data-aguardando="js/historico.js">
+              <span class="icone icone-esquerda" aria-hidden="true"></span> Anterior
+            </button>
+            <span class="texto-suave" id="info-paginacao"></span>
+            <button type="button" class="botao-secundario botao-pequeno" id="btn-pagina-seguinte"
+                    disabled data-aguardando="js/historico.js">
+              Próxima <span class="icone icone-direita" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR (celular) ===================== -->
+    <nav class="navegacao-inferior" aria-label="Menu principal">
+      <a class="item-nav" href="dashboard.html">
+        <span class="icone icone-painel" aria-hidden="true"></span> Painel
+      </a>
+      <a class="item-nav" href="dividas.html">
+        <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+      </a>
+      <a class="item-nav" href="gastos.html">
+        <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+      </a>
+      <a class="item-nav" href="parcelas.html">
+        <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+      </a>
+      <button type="button" id="btn-mais" class="item-nav"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-mais">
+        <span class="icone icone-mais" aria-hidden="true"></span> Mais
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== FOLHA "MAIS" (celular) ===================== -->
+  <div class="menu-mais-fundo" id="menu-mais" hidden>
+    <div class="menu-mais" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-mais">
+      <div class="menu-mais-cabecalho">
+        <h2 id="titulo-menu-mais">Mais</h2>
+        <button type="button" id="btn-fechar-mais" class="botao-icone" aria-label="Fechar menu">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul class="menu-mais-lista">
+        <li>
+          <a class="item-nav" href="calendario.html">
+            <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="historico.html">
+            <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="configuracoes.html">
+            <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+          </a>
+        </li>
+        <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+        <li id="menu-mais-admin"></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Toasts de feedback -->
+  <div class="area-toasts" id="area-toasts" aria-live="polite"></div>
+
+  <noscript>
+    <p style="max-width:600px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para carregar seus dados com segurança.
+    </p>
+  </noscript>
+
+  <!-- Credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+  =============================================================================
+  js/historico.js — contratos REAIS consumidos (database/schema.sql e rls.sql):
+    requireAuth() / logout('login.html') / normalizarErro()   [js/supabase.js]
+    obterCliente()                                             [js/supabase.js]
+
+    Tabela public.payment_history (SOMENTE LEITURA — RLS payment_history_select_own):
+      colunas: id, user_id, entity_type ('expense_installment'|'debt_occurrence'),
+               occurrence_id, installment_id,
+               action ('created'|'updated'|'paid'|'reverted'|'deleted'),
+               amount, due_date, reference (snapshot textual), occurred_at
+      filtros suportados: occurred_at (gte/lte), entity_type (eq), action (eq)
+      ordenação: occurred_date desc; paginação via .range(offset, offset+N-1)
+
+    js/charts.js → formatarMoeda (exibição de valores em R$)
+
+  ELEMENTOS QUE ELE CONTROLA (IDs desta página):
+    usuario-chip / usuario-inicial / usuario-nome / usuario-papel
+    btn-tema, btn-sair, btn-tentar-novamente  [data-aguardando]
+    estado-erro-global, erro-mensagem
+    form-filtros: filtro-de, filtro-ate, filtro-entidade, filtro-acao,
+                  btn-aplicar, btn-limpar-filtros
+    tabela-historico > corpo-historico, contador-historico,
+    estado-vazio-historico (estado-vazio-dica)
+    btn-pagina-anterior, btn-pagina-seguinte, info-paginacao
+    area-toasts
+
+  PÁGINA SOMENTE LEITURA: nenhuma escrita, exclusão ou edição de registros.
+  =============================================================================
+  -->
+  <script type="module" src="./js/historico.js"></script>
+</body>
+</html>

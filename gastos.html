@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Cadastre e gerencie seus gastos parcelados no Controle de Gastos: valor, data, parcelas e vencimentos com precisão de centavos.">
+  <title>Gastos — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/navegacao.js" defer></script>
+</head>
+<body data-pagina="gastos">
+
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="app">
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <header class="app-cabecalho">
+      <a class="marca marca-cabecalho" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="usuario-chip" id="usuario-chip" hidden>
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <span class="dados">
+          <span class="nome" id="usuario-nome">Carregando…</span>
+          <span class="papel" id="usuario-papel"></span>
+        </span>
+      </div>
+
+      <div class="acoes-cabecalho">
+        <button type="button" id="btn-tema" class="botao-icone"
+                disabled data-aguardando="js/gastos.js"
+                aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <span class="icone icone-tema" aria-hidden="true"></span>
+          <span class="rotulo-botao">Tema</span>
+        </button>
+        <button type="button" id="btn-sair" class="botao-icone"
+                disabled data-aguardando="js/gastos.js"
+                aria-label="Sair da conta">
+          <span class="icone icone-sair" aria-hidden="true"></span>
+          <span class="rotulo-botao">Sair</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== NAVEGAÇÃO LATERAL (desktop) ===================== -->
+    <nav class="navegacao-lateral" aria-label="Menu principal">
+      <a class="marca marca-lateral" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Principal</p>
+        <a class="item-nav" href="dashboard.html">
+          <span class="icone icone-painel" aria-hidden="true"></span> Painel
+        </a>
+        <a class="item-nav" href="dividas.html">
+          <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+        </a>
+        <a class="item-nav ativo" href="gastos.html" aria-current="page">
+          <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+        </a>
+        <a class="item-nav" href="parcelas.html">
+          <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+        </a>
+      </div>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Organização</p>
+        <a class="item-nav" href="calendario.html">
+          <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+        </a>
+        <a class="item-nav" href="historico.html">
+          <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+        </a>
+        <a class="item-nav" href="configuracoes.html">
+          <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+        </a>
+      </div>
+
+      <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+      <div class="nav-grupo" id="nav-admin-lateral"></div>
+
+      <div class="nav-rodape">
+        <p class="rodape-nav">Machado Scripts · Controle de Gastos</p>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTEÚDO ===================== -->
+    <main class="conteudo" id="conteudo">
+      <h1 class="titulo-pagina">Gastos</h1>
+      <p class="subtitulo-pagina">
+        Compras e despesas com parcelamento de 1 a 12 vezes e vencimento mensal ancorado.
+      </p>
+
+      <!-- Estado de erro global da listagem -->
+      <div id="estado-erro-global" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Não foi possível carregar os gastos</p>
+        <p id="erro-mensagem"></p>
+        <button type="button" class="botao-secundario" id="btn-tentar-novamente"
+                disabled data-aguardando="js/gastos.js">Tentar novamente</button>
+      </div>
+
+      <!-- ===================== BARRA DE FERRAMENTAS ===================== -->
+      <div class="barra-filtros" role="search" aria-label="Pesquisa e filtros de gastos">
+        <div class="campo-filtro" style="flex:2 1 220px">
+          <label for="campo-busca">Pesquisar</label>
+          <input type="search" id="campo-busca" placeholder="Descrição ou local…"
+                 autocomplete="off" maxlength="60">
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-situacao">Situação</label>
+          <!-- Valores reais de v_expense_summary.overall_status -->
+          <select id="filtro-situacao">
+            <option value="">Todas</option>
+            <option value="pending">Pendentes</option>
+            <option value="partial">Parcialmente pagas</option>
+            <option value="paid">Quitadas</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-ordem">Ordenar por</label>
+          <!-- Campos reais da view (whitelist em js/api.js) -->
+          <select id="filtro-ordem">
+            <option value="purchase_date:desc">Compra (mais recente)</option>
+            <option value="purchase_date:asc">Compra (mais antiga)</option>
+            <option value="total_amount:desc">Valor (maior)</option>
+            <option value="total_amount:asc">Valor (menor)</option>
+            <option value="next_due_date:asc">Próximo vencimento</option>
+          </select>
+        </div>
+
+        <button type="button" id="btn-novo-gasto" class="botao"
+                disabled data-aguardando="js/gastos.js">
+          <span class="icone icone-adicionar" aria-hidden="true"></span> Novo gasto
+        </button>
+      </div>
+
+      <!-- ===================== LISTAGEM ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-lista-gastos">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-lista-gastos">Meus gastos</h2>
+          <span class="painel-acoes texto-suave" id="contador-gastos" aria-live="polite"></span>
+        </div>
+        <div class="painel-corpo">
+
+          <div class="tabela-responsiva" id="tabela-gastos">
+            <table>
+              <caption class="sr-only">Lista de gastos com situação das parcelas</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Local / dívida</th>
+                  <th scope="col">Compra</th>
+                  <th scope="col">Valor total</th>
+                  <th scope="col">Parcelas</th>
+                  <th scope="col">Próximo venc.</th>
+                  <th scope="col">Situação</th>
+                  <th scope="col">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-gastos">
+                <!-- Esqueleto inicial (nunca dados fictícios) -->
+                <tr>
+                  <td colspan="8">
+                    <div class="carregando-painel" role="status" aria-label="Carregando gastos">
+                      <span class="esqueleto-linha" style="width:85%"></span>
+                      <span class="esqueleto-linha" style="width:60%"></span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Estado vazio (revelado por js/gastos.js) -->
+          <div id="estado-vazio-gastos" class="estado-vazio" hidden>
+            <span class="icone-estado" aria-hidden="true"></span>
+            <p class="titulo-estado">Nenhum gasto encontrado</p>
+            <p>Cadastre seu primeiro gasto com o botão “Novo gasto”.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR (celular) ===================== -->
+    <nav class="navegacao-inferior" aria-label="Menu principal">
+      <a class="item-nav" href="dashboard.html">
+        <span class="icone icone-painel" aria-hidden="true"></span> Painel
+      </a>
+      <a class="item-nav" href="dividas.html">
+        <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+      </a>
+      <a class="item-nav ativo" href="gastos.html" aria-current="page">
+        <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+      </a>
+      <a class="item-nav" href="parcelas.html">
+        <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+      </a>
+      <button type="button" id="btn-mais" class="item-nav"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-mais">
+        <span class="icone icone-mais" aria-hidden="true"></span> Mais
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== FOLHA "MAIS" (celular) ===================== -->
+  <div class="menu-mais-fundo" id="menu-mais" hidden>
+    <div class="menu-mais" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-mais">
+      <div class="menu-mais-cabecalho">
+        <h2 id="titulo-menu-mais">Mais</h2>
+        <button type="button" id="btn-fechar-mais" class="botao-icone" aria-label="Fechar menu">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul class="menu-mais-lista">
+        <li>
+          <a class="item-nav" href="calendario.html">
+            <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="historico.html">
+            <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="configuracoes.html">
+            <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+          </a>
+        </li>
+        <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+        <li id="menu-mais-admin"></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: CADASTRAR / EDITAR GASTO ===================== -->
+  <div class="modal-fundo" id="modal-gasto" role="dialog" aria-modal="true"
+       aria-labelledby="titulo-modal-gasto" hidden>
+    <div class="modal">
+      <div class="modal-cabecalho">
+        <h2 class="painel-titulo" id="titulo-modal-gasto">Novo gasto</h2>
+        <button type="button" class="botao-icone" id="btn-fechar-gasto"
+                aria-label="Fechar sem salvar">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <p id="mensagem-gasto" class="mensagem" role="alert" hidden></p>
+
+      <form id="form-gasto" novalidate>
+        <div class="campo">
+          <label for="campo-descricao">Descrição da compra</label>
+          <input type="text" id="campo-descricao" maxlength="160" required
+                 placeholder="Ex.: Compra no supermercado">
+        </div>
+
+        <div class="campo">
+          <label for="campo-valor">Valor total (R$)</label>
+          <input type="text" id="campo-valor" inputmode="decimal" required
+                 placeholder="Ex.: 120,00" autocomplete="off">
+          <p class="dica-campo">Aceita vírgula ou ponto: 1.250,75 ou 1250.75</p>
+        </div>
+
+        <div class="campo">
+          <label for="campo-data-compra">Data da compra</label>
+          <input type="date" id="campo-data-compra" required>
+        </div>
+
+        <div class="campo">
+          <label for="campo-local">Local ou estabelecimento <span class="texto-suave">(opcional)</span></label>
+          <input type="text" id="campo-local" maxlength="160"
+                 placeholder="Ex.: Carlinhos Lanches" autocomplete="off">
+        </div>
+
+        <div class="campo">
+          <label for="campo-divida">Dívida relacionada <span class="texto-suave">(opcional)</span></label>
+          <!-- Opções reais de public.debts (api.dividas.listar). A categoria do
+               gasto deriva da dívida vinculada (decisão da Fase 5-A). -->
+          <select id="campo-divida">
+            <option value="">Sem dívida (gasto avulso)</option>
+          </select>
+          <p class="dica-campo">A categoria exibida no painel vem da dívida vinculada.</p>
+        </div>
+
+        <div class="campo">
+          <label for="campo-parcelas">Quantidade de parcelas</label>
+          <select id="campo-parcelas">
+            <option value="1" selected>1× (à vista)</option>
+            <option value="2">2×</option>
+            <option value="3">3×</option>
+            <option value="4">4×</option>
+            <option value="5">5×</option>
+            <option value="6">6×</option>
+            <option value="7">7×</option>
+            <option value="8">8×</option>
+            <option value="9">9×</option>
+            <option value="10">10×</option>
+            <option value="11">11×</option>
+            <option value="12">12×</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="campo-primeiro-vencimento">Vencimento da 1ª parcela</label>
+          <input type="date" id="campo-primeiro-vencimento" required>
+          <p class="dica-campo">
+            O dia escolhido é a âncora: meses sem esse dia usam o último dia
+            (31/01 → 28/02 → 31/03).
+          </p>
+        </div>
+
+        <!-- Prévia calculada por js/gastos.js com api.preverParcelas
+             (mesma regra de public.split_amount + add_months_clapped) -->
+        <div class="cartao-painel" id="previa-parcelas-container" hidden>
+          <div class="painel-cabecalho">
+            <h3 class="painel-titulo">Prévia das parcelas</h3>
+            <span class="etiqueta etiqueta-pendente" id="previa-soma"></span>
+          </div>
+          <div class="painel-corpo">
+            <ul class="lista-lancamentos" id="previa-parcelas"></ul>
+            <p class="dica-campo" id="previa-nota"></p>
+          </div>
+        </div>
+
+        <div class="modal-acoes">
+          <button type="button" class="botao-secundario" id="btn-cancelar-gasto">Cancelar</button>
+          <button type="submit" class="botao" id="btn-salvar-gasto">Salvar gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: CONFIRMAR EXCLUSÃO ===================== -->
+  <div class="modal-fundo" id="modal-excluir" role="dialog" aria-modal="true"
+       aria-labelledby="titulo-modal-excluir" hidden>
+    <div class="modal">
+      <div class="modal-cabecalho">
+        <h2 class="painel-titulo" id="titulo-modal-excluir">Excluir gasto</h2>
+      </div>
+      <p id="excluir-resumo">
+        Esta ação exclui o gasto e TODAS as suas parcelas. O histórico de
+        pagamentos já registrados é preservado.
+      </p>
+      <p id="mensagem-excluir" class="mensagem" role="alert" hidden></p>
+      <div class="modal-acoes">
+        <button type="button" class="botao-secundario" id="btn-cancelar-excluir">Cancelar</button>
+        <button type="button" class="botao-perigo" id="btn-confirmar-excluir">Excluir definitivamente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts de feedback (sucesso/erro) -->
+  <div class="area-toasts" id="area-toasts" aria-live="polite"></div>
+
+  <noscript>
+    <p style="max-width:600px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para carregar seus dados com segurança.
+    </p>
+  </noscript>
+
+  <!-- Credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+  =============================================================================
+  js/gastos.js — contratos REAIS consumidos (js/api.js / js/supabase.js):
+    requireAuth() / logout('login.html') / normalizarErro()
+    api.gastos.listar({ busca, status, ordem, direcao, limite })
+    api.gastos.obter(id) → { compra, parcelas[], divida }
+    api.gastos.criar(dados, chaveIdempotencia) → RPC create_expense_with_installments
+    api.gastos.atualizar(id, payload)          → RPC update_expense
+    api.gastos.excluir(id)                     → RPC delete_expense
+    api.dividas.listar() / api.categorias.listar()
+    api.preverParcelas(centavos, qtd, primeiroVenc) / api.paraCentavos(texto)
+
+  ELEMENTOS QUE ELE CONTROLA (IDs desta página):
+    usuario-chip / usuario-inicial / usuario-nome / usuario-papel
+    btn-tema, btn-sair, btn-tentar-novamente, btn-novo-gasto  [data-aguardando]
+    estado-erro-global, erro-mensagem
+    campo-busca, filtro-situacao, filtro-ordem (busca com debounce)
+    tabela-gastos > corpo-gastos, contador-gastos, estado-vazio-gastos
+    modal-gasto (form-gasto: campo-descricao, campo-valor, campo-data-compra,
+      campo-local, campo-divida, campo-parcelas, campo-primeiro-vencimento,
+      previa-parcelas-container, previa-parcelas, previa-soma, previa-nota,
+      mensagem-gasto, btn-fechar-gasto, btn-cancelar-gasto, btn-salvar-gasto)
+    modal-excluir (excluir-resumo, mensagem-excluir, btn-cancelar-excluir,
+      btn-confirmar-excluir)
+    area-toasts
+  =============================================================================
+  -->
+  <script type="module" src="./js/gastos.js"></script>
+</body>
+</html>

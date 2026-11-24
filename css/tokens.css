@@ -1,0 +1,326 @@
+/* =============================================================================
+   css/tokens.css — FUNDAÇÃO VISUAL 3.2
+   -----------------------------------------------------------------------------
+   Identidade Machado Scripts: verde profundo, teal e neutros quentes.
+   Um único sistema de tema:
+     • claro (padrão)
+     • escuro manual  <html data-theme="escuro">
+     • escuro automático por prefers-color-scheme quando não há escolha explícita
+   A preferência é aplicada antes do primeiro paint (js/theme-preload.js).
+   Este arquivo NÃO contém regras de layout; apenas tokens e utilidades globais.
+   ============================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* 1. Paleta base --------------------------------------------------------- */
+  --verde-900: #073b2e;
+  --verde-800: #0a4d3c;
+  --verde-700: #0d5e49;
+  --verde-600: #0f6b54;
+  --verde-500: #167e64;
+  --verde-200: #b9dccd;
+  --verde-100: #dcefe6;
+  --verde-50:  #eaf5ef;
+
+  --teal-700: #0f5f63;
+  --teal-600: #14767a;
+  --teal-50:  #e6f3f3;
+
+  --areia-50:  #fbfaf6;
+  --areia-100: #f5f3ec;
+  --areia-200: #ece9df;
+  --areia-300: #ddd9cb;
+
+  --tinta-900: #13221d;
+  --tinta-700: #394a43;
+  --tinta-500: #5d6c65;
+
+  --ambar-600: #a86512;
+  --ambar-500: #c98a2e;
+  --ambar-100: #fbf0dc;
+
+  --vermelho-700: #8f3229;
+  --vermelho-600: #a83f36;
+  --vermelho-100: #fbeae7;
+
+  --azul-600: #2f6f8f;
+  --azul-100: #e7f0f5;
+
+  /* 2. Papéis semânticos — superfícies e texto ---------------------------- */
+  --fundo:           #f4f2ec;
+  --fundo-alto:      #f8f7f2;
+  --superficie:      #ffffff;
+  --superficie-alta: var(--areia-50);
+  --texto:           var(--tinta-900);
+  --texto-suave:     var(--tinta-500);
+  --borda:           #e5e2d9;
+  --borda-forte:     #d3cfc2;
+
+  /* 3. Marca e estados ---------------------------------------------------- */
+  --destaque:         var(--verde-600);
+  --destaque-forte:   var(--verde-800);
+  --destaque-suave:   var(--verde-50);
+  --destaque-texto:   var(--verde-800);
+
+  --sucesso:          #147a57;
+  --sucesso-fundo:    #e3f3eb;
+  --sucesso-texto:    #0d5a40;
+
+  --alerta:           var(--ambar-500);
+  --alerta-fundo:     var(--ambar-100);
+  --alerta-texto:     #7a4a0c;
+
+  --erro:             var(--vermelho-600);
+  --erro-fundo:       var(--vermelho-100);
+  --erro-texto:       #842d26;
+
+  --info:             var(--azul-600);
+  --info-fundo:       var(--azul-100);
+
+  /* 4. Gráficos ----------------------------------------------------------- */
+  --grafico-pago:      #147a57;
+  --grafico-pendente:  #c98a2e;
+  --grafico-principal: #0f6b54;
+  --grafico-secundario:#5d8f80;
+  --grafico-grade:     #eae7de;
+  --grafico-trilho:    #eef1ec;
+
+  /* 5. Espaçamento -------------------------------------------------------- */
+  --esp-1:  0.25rem;
+  --esp-2:  0.5rem;
+  --esp-3:  0.75rem;
+  --esp-4:  1rem;
+  --esp-5:  1.25rem;
+  --esp-6:  1.5rem;
+  --esp-7:  2rem;
+  --esp-8:  2.5rem;
+  --esp-9:  3rem;
+  --esp-10: 4rem;
+
+  /* 6. Formas ------------------------------------------------------------- */
+  --raio-pequeno:  9px;
+  --raio-medio:    13px;
+  --raio-grande:   18px;
+  --raio-completo: 999px;
+
+  --sombra-1: 0 1px 2px rgba(19, 34, 29, .05);
+  --sombra-2: 0 8px 24px rgba(19, 34, 29, .07);
+  --sombra-3: 0 22px 55px rgba(19, 34, 29, .16);
+
+  /* 7. Tipografia --------------------------------------------------------- */
+  --fonte-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fonte-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --fonte-xs:  clamp(0.72rem, 0.20vw + 0.68rem, 0.78rem);
+  --fonte-sm:  clamp(0.82rem, 0.28vw + 0.75rem, 0.9rem);
+  --fonte-md:  clamp(0.94rem, 0.22vw + 0.89rem, 1rem);
+  --fonte-lg:  clamp(1.06rem, 0.45vw + 0.95rem, 1.16rem);
+  --fonte-xl:  clamp(1.22rem, 0.85vw + 1rem, 1.45rem);
+  --fonte-2xl: clamp(1.45rem, 1.55vw + 1.05rem, 1.9rem);
+  --fonte-3xl: clamp(1.8rem, 2.35vw + 1.15rem, 2.45rem);
+
+  --linha-curta: 1.25;
+  --linha-media: 1.55;
+  --linha-longa: 1.68;
+
+  --peso-normal:   400;
+  --peso-medio:    500;
+  --peso-semibold: 600;
+  --peso-bold:     700;
+
+  /* 8. Camadas e movimento ------------------------------------------------ */
+  --camada-menu:     1000;
+  --camada-modal:    1100;
+  --camada-toast:    1200;
+  --camada-bloqueio: 99990;
+
+  --transicao-rapida: 140ms ease;
+  --transicao-media:  220ms ease;
+
+  /* 9. Layout ------------------------------------------------------------- */
+  --largura-maxima: 1320px;
+  --largura-barra:  260px;
+  --altura-cabecalho: 72px;
+  --altura-toque:   44px;
+}
+
+/* -----------------------------------------------------------------------------
+   TEMA ESCURO MANUAL
+   --------------------------------------------------------------------------- */
+:root[data-theme="escuro"] {
+  color-scheme: dark;
+
+  --fundo:           #0a1210;
+  --fundo-alto:      #0d1714;
+  --superficie:      #101b17;
+  --superficie-alta: #15231e;
+  --texto:           #e9f1ec;
+  --texto-suave:     #a3b3ab;
+  --borda:           #23332c;
+  --borda-forte:     #33483f;
+
+  --destaque:        #62c9a8;
+  --destaque-forte:  #89dfc2;
+  --destaque-suave:  #14312a;
+  --destaque-texto:  #b9f2df;
+
+  --sucesso:         #56c99b;
+  --sucesso-fundo:   #123128;
+  --sucesso-texto:   #a7ebcd;
+
+  --alerta:          #e0a94a;
+  --alerta-fundo:    #33260f;
+  --alerta-texto:    #f3cc85;
+
+  --erro:            #e0837a;
+  --erro-fundo:      #351a17;
+  --erro-texto:      #f5b3ac;
+
+  --info:            #7db8d4;
+  --info-fundo:      #152a35;
+
+  --grafico-pago:       #56c99b;
+  --grafico-pendente:   #e0a94a;
+  --grafico-principal:  #62c9a8;
+  --grafico-secundario: #7ba99a;
+  --grafico-grade:      #22332c;
+  --grafico-trilho:     #2a4037;
+
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, .35);
+  --sombra-2: 0 8px 24px rgba(0, 0, 0, .30);
+  --sombra-3: 0 22px 55px rgba(0, 0, 0, .45);
+}
+
+/* -----------------------------------------------------------------------------
+   ESCURO AUTOMÁTICO — apenas quando o usuário não fixou um tema
+   --------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="claro"]):not([data-theme="escuro"]) {
+    color-scheme: dark;
+
+    --fundo:           #0a1210;
+    --fundo-alto:      #0d1714;
+    --superficie:      #101b17;
+    --superficie-alta: #15231e;
+    --texto:           #e9f1ec;
+    --texto-suave:     #a3b3ab;
+    --borda:           #23332c;
+    --borda-forte:     #33483f;
+
+    --destaque:        #62c9a8;
+    --destaque-forte:  #89dfc2;
+    --destaque-suave:  #14312a;
+    --destaque-texto:  #b9f2df;
+
+    --sucesso:         #56c99b;
+    --sucesso-fundo:   #123128;
+    --sucesso-texto:   #a7ebcd;
+
+    --alerta:          #e0a94a;
+    --alerta-fundo:    #33260f;
+    --alerta-texto:    #f3cc85;
+
+    --erro:            #e0837a;
+    --erro-fundo:      #351a17;
+    --erro-texto:      #f5b3ac;
+
+    --info:            #7db8d4;
+    --info-fundo:      #152a35;
+
+    --grafico-pago:       #56c99b;
+    --grafico-pendente:   #e0a94a;
+    --grafico-principal:  #62c9a8;
+    --grafico-secundario: #7ba99a;
+    --grafico-grade:      #22332c;
+    --grafico-trilho:     #2a4037;
+
+    --sombra-1: 0 1px 2px rgba(0, 0, 0, .35);
+    --sombra-2: 0 8px 24px rgba(0, 0, 0, .30);
+    --sombra-3: 0 22px 55px rgba(0, 0, 0, .45);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   ACESSIBILIDADE GLOBAL
+   --------------------------------------------------------------------------- */
+*:focus-visible {
+  outline: 2px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--destaque-suave);
+  color: var(--destaque-texto);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   UTILITÁRIOS
+   --------------------------------------------------------------------------- */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pular-para-conteudo {
+  position: fixed;
+  z-index: var(--camada-toast);
+  top: var(--esp-2);
+  left: var(--esp-2);
+  padding: 10px 14px;
+  color: var(--superficie);
+  background: var(--texto);
+  border-radius: var(--raio-pequeno);
+  font-weight: var(--peso-semibold);
+  text-decoration: none;
+  transform: translateY(-180%);
+}
+.pular-para-conteudo:focus {
+  transform: none;
+}
+
+.texto-suave   { color: var(--texto-suave); }
+.texto-sucesso { color: var(--sucesso-texto); }
+.texto-alerta  { color: var(--alerta-texto); }
+.texto-erro    { color: var(--erro-texto); }
+
+img, svg, video, canvas { max-width: 100%; }
+
+/* -----------------------------------------------------------------------------
+   COMPATIBILIDADE — nomes antigos usados por módulos e páginas de autenticação
+   --------------------------------------------------------------------------- */
+:root,
+:root[data-theme="escuro"] {
+  --cor-primaria:        var(--destaque);
+  --cor-primaria-escura: var(--destaque-forte);
+  --cor-fundo:           var(--fundo);
+  --cor-card:            var(--superficie);
+  --cor-texto:           var(--texto);
+  --cor-texto-suave:     var(--texto-suave);
+  --cor-borda:           var(--borda);
+  --cor-erro:            var(--erro);
+  --cor-erro-fundo:      var(--erro-fundo);
+  --cor-sucesso:         var(--sucesso);
+  --cor-sucesso-fundo:   var(--sucesso-fundo);
+  --cor-aviso:           var(--alerta-texto);
+  --cor-aviso-fundo:     var(--alerta-fundo);
+  --cor-media:           var(--alerta);
+  --raio:                var(--raio-grande);
+  --sombra:              var(--sombra-2);
+}

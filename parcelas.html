@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Agenda de parcelas do Controle de Gastos: vencimentos, situação e pagamento individual com confirmação do banco.">
+  <title>Parcelas — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/navegacao.js" defer></script>
+</head>
+<body data-pagina="parcelas">
+
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="app">
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <header class="app-cabecalho">
+      <a class="marca marca-cabecalho" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="usuario-chip" id="usuario-chip" hidden>
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <span class="dados">
+          <span class="nome" id="usuario-nome">Carregando…</span>
+          <span class="papel" id="usuario-papel"></span>
+        </span>
+      </div>
+
+      <div class="acoes-cabecalho">
+        <button type="button" id="btn-tema" class="botao-icone"
+                disabled data-aguardando="js/parcelas.js"
+                aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <span class="icone icone-tema" aria-hidden="true"></span>
+          <span class="rotulo-botao">Tema</span>
+        </button>
+        <button type="button" id="btn-sair" class="botao-icone"
+                disabled data-aguardando="js/parcelas.js"
+                aria-label="Sair da conta">
+          <span class="icone icone-sair" aria-hidden="true"></span>
+          <span class="rotulo-botao">Sair</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== NAVEGAÇÃO LATERAL (desktop) ===================== -->
+    <nav class="navegacao-lateral" aria-label="Menu principal">
+      <a class="marca marca-lateral" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Principal</p>
+        <a class="item-nav" href="dashboard.html">
+          <span class="icone icone-painel" aria-hidden="true"></span> Painel
+        </a>
+        <a class="item-nav" href="dividas.html">
+          <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+        </a>
+        <a class="item-nav" href="gastos.html">
+          <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+        </a>
+        <a class="item-nav ativo" href="parcelas.html" aria-current="page">
+          <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+        </a>
+      </div>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Organização</p>
+        <a class="item-nav" href="calendario.html">
+          <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+        </a>
+        <a class="item-nav" href="historico.html">
+          <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+        </a>
+        <a class="item-nav" href="configuracoes.html">
+          <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+        </a>
+      </div>
+
+      <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+      <div class="nav-grupo" id="nav-admin-lateral"></div>
+
+      <div class="nav-rodape">
+        <p class="rodape-nav">Cada parcela é paga individualmente — uma não altera as outras.</p>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTEÚDO ===================== -->
+    <main class="conteudo" id="conteudo">
+      <h1 class="titulo-pagina">Parcelas</h1>
+      <p class="subtitulo-pagina" id="subtitulo-pagina">
+        Vencimentos e situação de cada parcela. O pagamento é sempre individual.
+      </p>
+
+      <!-- Estado de erro global -->
+      <div id="estado-erro-global" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Não foi possível carregar as parcelas</p>
+        <p id="erro-mensagem"></p>
+        <button type="button" class="botao-secundario" id="btn-tentar-novamente"
+                disabled data-aguardando="js/parcelas.js">Tentar novamente</button>
+      </div>
+
+      <!-- Banner da compra (?compra=<expense_id>) — preenchido por js/parcelas.js
+           com dados reais de api.gastos.obter -->
+      <section class="cartao-painel" id="banner-compra" hidden aria-labelledby="titulo-banner-compra">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-banner-compra">Filtrando por compra</h2>
+          <div class="painel-acoes">
+            <a class="botao-secundario botao-pequeno" href="gastos.html">Voltar aos gastos</a>
+            <a class="botao-fantasma botao-pequeno" href="parcelas.html">Ver todas as parcelas</a>
+          </div>
+        </div>
+        <div class="painel-corpo">
+          <p class="item-principal" id="compra-titulo"></p>
+          <p class="item-secundario" id="compra-info"></p>
+          <p id="compra-situacao" style="margin-top:8px"></p>
+        </div>
+      </section>
+
+      <!-- ===================== FILTROS (modo geral) ===================== -->
+      <form class="barra-filtros" id="form-filtros" aria-label="Filtros de parcelas"
+            hidden data-modo="geral">
+        <div class="campo-filtro">
+          <label for="filtro-status">Situação</label>
+          <select id="filtro-status">
+            <option value="">Todas</option>
+            <option value="pending">Pendentes</option>
+            <option value="paid">Pagas</option>
+          </select>
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-de">Vencimento de</label>
+          <input type="date" id="filtro-de">
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-ate">Vencimento até</label>
+          <input type="date" id="filtro-ate">
+        </div>
+
+        <div class="campo-filtro">
+          <label for="filtro-ordem">Ordenar por vencimento</label>
+          <select id="filtro-ordem">
+            <option value="asc">Mais próximo primeiro</option>
+            <option value="desc">Mais distante primeiro</option>
+          </select>
+        </div>
+
+        <button type="button" class="botao-secundario botao-pequeno" id="btn-limpar-filtros"
+                disabled data-aguardando="js/parcelas.js">Limpar filtros</button>
+      </form>
+
+      <!-- Resumo das parcelas listadas (dados reais, calculado por js/parcelas.js) -->
+      <p class="subtitulo-pagina" id="resumo-lista" aria-live="polite"></p>
+
+      <!-- ===================== LISTAGEM ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-lista-parcelas">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-lista-parcelas">Agenda de parcelas</h2>
+        </div>
+        <div class="painel-corpo">
+
+          <div class="tabela-responsiva" id="tabela-parcelas">
+            <table>
+              <caption class="sr-only">Parcelas com vencimento, valor e situação</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Compra</th>
+                  <th scope="col">Parcela</th>
+                  <th scope="col">Vencimento</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col">Situação</th>
+                  <th scope="col">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-parcelas">
+                <tr>
+                  <td colspan="6">
+                    <div class="carregando-painel" role="status" aria-label="Carregando parcelas">
+                      <span class="esqueleto-linha" style="width:85%"></span>
+                      <span class="esqueleto-linha" style="width:60%"></span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="estado-vazio-parcelas" class="estado-vazio" hidden>
+            <span class="icone-estado" aria-hidden="true"></span>
+            <p class="titulo-estado">Nenhuma parcela encontrada</p>
+            <p id="estado-vazio-dica">Ajuste os filtros ou cadastre um gasto em Gastos.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR (celular) ===================== -->
+    <nav class="navegacao-inferior" aria-label="Menu principal">
+      <a class="item-nav" href="dashboard.html">
+        <span class="icone icone-painel" aria-hidden="true"></span> Painel
+      </a>
+      <a class="item-nav" href="dividas.html">
+        <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+      </a>
+      <a class="item-nav" href="gastos.html">
+        <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+      </a>
+      <a class="item-nav ativo" href="parcelas.html" aria-current="page">
+        <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+      </a>
+      <button type="button" id="btn-mais" class="item-nav"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-mais">
+        <span class="icone icone-mais" aria-hidden="true"></span> Mais
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== FOLHA "MAIS" (celular) ===================== -->
+  <div class="menu-mais-fundo" id="menu-mais" hidden>
+    <div class="menu-mais" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-mais">
+      <div class="menu-mais-cabecalho">
+        <h2 id="titulo-menu-mais">Mais</h2>
+        <button type="button" id="btn-fechar-mais" class="botao-icone" aria-label="Fechar menu">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul class="menu-mais-lista">
+        <li>
+          <a class="item-nav" href="calendario.html">
+            <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="historico.html">
+            <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="configuracoes.html">
+            <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+          </a>
+        </li>
+        <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+        <li id="menu-mais-admin"></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: CONFIRMAR REVERSÃO ===================== -->
+  <div class="modal-fundo" id="modal-reverter" role="dialog" aria-modal="true"
+       aria-labelledby="titulo-modal-reverter" hidden>
+    <div class="modal">
+      <div class="modal-cabecalho">
+        <h2 class="painel-titulo" id="titulo-modal-reverter">Reverter pagamento</h2>
+      </div>
+      <p id="reverter-resumo"></p>
+      <p class="dica-campo">
+        A parcela volta a ficar pendente e os indicadores do painel são
+        recalculados pelo banco. As demais parcelas não são alteradas.
+      </p>
+      <p id="mensagem-reverter" class="mensagem" role="alert" hidden></p>
+      <div class="modal-acoes">
+        <button type="button" class="botao-secundario" id="btn-cancelar-reverter">Cancelar</button>
+        <button type="button" class="botao-perigo" id="btn-confirmar-reverter">Reverter pagamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toasts de feedback -->
+  <div class="area-toasts" id="area-toasts" aria-live="polite"></div>
+
+  <noscript>
+    <p style="max-width:600px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para carregar seus dados com segurança.
+    </p>
+  </noscript>
+
+  <!-- Credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+  =============================================================================
+  js/parcelas.js — contratos reais utilizados:
+    requireAuth() / logout('login.html') / normalizarErro()   [js/supabase.js]
+    api.parcelas.listar({ status, de, ate, ordem, limite })   → v_agenda (kind =
+        'expense_installment'), filtros reais: status, due_date (gte/lte), ordem
+    api.parcelas.listarPorCompra(expenseId)                   → parcelas da compra
+    api.gastos.obter(expenseId)  → {compra, parcelas, divida} (banner ?compra=)
+    api.parcelas.definirPagamento(id, pago) → RPC set_installment_paid
+        retorno: { id, expense_id, status, paid_at, changed, installments_paid,
+                   installments_pending, pending_amount, overall_status }
+  Modo ?compra=<expense_id>: filtra a agenda para a compra (listarPorCompra)
+  e exibe o banner com os dados reais da compra.
+  =============================================================================
+  -->
+  <script type="module" src="./js/parcelas.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Calendário financeiro do Controle de Gastos: vencimentos de parcelas e dívidas por dia, com estados pagos, pendentes e vencidos.">
+  <title>Calendário — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/navegacao.js" defer></script>
+</head>
+<body data-pagina="calendario">
+
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="app">
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <header class="app-cabecalho">
+      <a class="marca marca-cabecalho" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="usuario-chip" id="usuario-chip" hidden>
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <span class="dados">
+          <span class="nome" id="usuario-nome">Carregando…</span>
+          <span class="papel" id="usuario-papel"></span>
+        </span>
+      </div>
+
+      <div class="acoes-cabecalho">
+        <button type="button" id="btn-tema" class="botao-icone"
+                disabled data-aguardando="js/calendario.js"
+                aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <span class="icone icone-tema" aria-hidden="true"></span>
+          <span class="rotulo-botao">Tema</span>
+        </button>
+        <button type="button" id="btn-sair" class="botao-icone"
+                disabled data-aguardando="js/calendario.js"
+                aria-label="Sair da conta">
+          <span class="icone icone-sair" aria-hidden="true"></span>
+          <span class="rotulo-botao">Sair</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== NAVEGAÇÃO LATERAL (desktop) ===================== -->
+    <nav class="navegacao-lateral" aria-label="Menu principal">
+      <a class="marca marca-lateral" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Principal</p>
+        <a class="item-nav" href="dashboard.html">
+          <span class="icone icone-painel" aria-hidden="true"></span> Painel
+        </a>
+        <a class="item-nav" href="dividas.html">
+          <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+        </a>
+        <a class="item-nav" href="gastos.html">
+          <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+        </a>
+        <a class="item-nav" href="parcelas.html">
+          <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+        </a>
+      </div>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Organização</p>
+        <a class="item-nav ativo" href="calendario.html" aria-current="page">
+          <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+        </a>
+        <a class="item-nav" href="historico.html">
+          <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+        </a>
+        <a class="item-nav" href="configuracoes.html">
+          <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+        </a>
+      </div>
+
+      <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+      <div class="nav-grupo" id="nav-admin-lateral"></div>
+
+      <div class="nav-rodape">
+        <p class="rodape-nav">Somente leitura: pagamentos são feitos em Parcelas.</p>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTEÚDO ===================== -->
+    <main class="conteudo" id="conteudo">
+      <h1 class="titulo-pagina">Calendário</h1>
+      <p class="subtitulo-pagina">
+        Vencimentos de parcelas e dívidas por dia. Os pagamentos são feitos na tela de Parcelas.
+      </p>
+
+      <!-- Estado de erro global -->
+      <div id="estado-erro-global" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Não foi possível carregar o calendário</p>
+        <p id="erro-mensagem"></p>
+        <button type="button" class="botao-secundario" id="btn-tentar-novamente"
+                disabled data-aguardando="js/calendario.js">Tentar novamente</button>
+      </div>
+
+      <!-- Navegação de mês + filtro de situação -->
+      <div class="cal-barra">
+        <div class="cal-navegacao">
+          <button type="button" class="botao-icone" id="btn-mes-anterior"
+                  disabled data-aguardando="js/calendario.js" aria-label="Mês anterior">
+            <span class="icone icone-esquerda" aria-hidden="true"></span>
+          </button>
+          <span class="cal-titulo-mes" id="cal-titulo" aria-live="polite">…</span>
+          <button type="button" class="botao-icone" id="btn-mes-seguinte"
+                  disabled data-aguardando="js/calendario.js" aria-label="Mês seguinte">
+            <span class="icone icone-direita" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="botao-secundario botao-pequeno" id="btn-hoje"
+                  disabled data-aguardando="js/calendario.js">Hoje</button>
+        </div>
+
+        <div class="campo-filtro" style="max-width:180px">
+          <label for="filtro-situacao">Situação</label>
+          <!-- Valores reais de v_agenda.status -->
+          <select id="filtro-situacao">
+            <option value="">Todas</option>
+            <option value="pending">Pendentes</option>
+            <option value="paid">Pagas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ===================== GRADE MENSAL (7 colunas em todas as larguras) ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-grade">
+        <div class="painel-corpo">
+          <h2 id="titulo-grade" class="sr-only">Grade mensal de vencimentos</h2>
+          <div class="cal-grade" id="cal-grade" role="grid" aria-label="Calendário do mês"></div>
+          <p class="dica-campo" style="margin-top:12px">
+            Legenda: <strong>pago</strong> · <strong>pendente</strong> · <strong>vencido</strong>.
+            Selecione um dia para ver os detalhes.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================== DETALHES DO DIA ===================== -->
+      <section class="cartao-painel cal-detalhes" id="painel-dia" hidden aria-labelledby="titulo-dia">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-dia">Dia</h2>
+        </div>
+        <div class="painel-corpo">
+          <ul class="lista-lancamentos" id="lista-dia"></ul>
+        </div>
+      </section>
+
+      <!-- ===================== LISTA DO MÊS ===================== -->
+      <section aria-labelledby="titulo-lista-mes">
+        <h2 id="titulo-lista-mes">Vencimentos do mês</h2>
+        <div id="lista-mes" class="cal-lista-mes" style="margin-top:var(--esp-4)">
+          <div class="carregando-painel" role="status" aria-label="Carregando vencimentos">
+            <span class="esqueleto-linha" style="width:85%"></span>
+            <span class="esqueleto-linha" style="width:60%"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR (celular) ===================== -->
+    <nav class="navegacao-inferior" aria-label="Menu principal">
+      <a class="item-nav" href="dashboard.html">
+        <span class="icone icone-painel" aria-hidden="true"></span> Painel
+      </a>
+      <a class="item-nav" href="dividas.html">
+        <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+      </a>
+      <a class="item-nav" href="gastos.html">
+        <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+      </a>
+      <a class="item-nav" href="parcelas.html">
+        <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+      </a>
+      <button type="button" id="btn-mais" class="item-nav"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-mais">
+        <span class="icone icone-mais" aria-hidden="true"></span> Mais
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== FOLHA "MAIS" (celular) ===================== -->
+  <div class="menu-mais-fundo" id="menu-mais" hidden>
+    <div class="menu-mais" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-mais">
+      <div class="menu-mais-cabecalho">
+        <h2 id="titulo-menu-mais">Mais</h2>
+        <button type="button" id="btn-fechar-mais" class="botao-icone" aria-label="Fechar menu">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul class="menu-mais-lista">
+        <li>
+          <a class="item-nav" href="calendario.html">
+            <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="historico.html">
+            <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="configuracoes.html">
+            <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+          </a>
+        </li>
+        <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+        <li id="menu-mais-admin"></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Toasts de feedback -->
+  <div class="area-toasts" id="area-toasts" aria-live="polite"></div>
+
+  <noscript>
+    <p style="max-width:600px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para carregar seus dados com segurança.
+    </p>
+  </noscript>
+
+  <!-- Credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+  =============================================================================
+  js/calendario.js — contratos reais utilizados:
+    requireAuth() / logout('login.html') / normalizarErro()  [js/supabase.js]
+    View pública.v_agenda (consulta direta, padrão já usado em js/dashboard.js):
+      colunas kind, id, due_date, status, amount, paid_at, title, subtitle,
+      category_name, expense_id, installment_number, installments_total
+      filtros: due_date (gte/lte do mês exibido) + status opcional; RLS por usuário.
+    Ações de pagamento NÃO existem aqui (regra da Etapa 6): itens de parcela
+    apontam para parcelas.html?compra=<expense_id>.
+  =============================================================================
+  -->
+  <script type="module" src="./js/calendario.js"></script>
+</body>
+</html>

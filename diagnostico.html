@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <script src="./js/theme-preload.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagnóstico — Controle de Gastos</title>
+</head>
+<body>
+  <h1>Diagnóstico da instalação</h1>
+  <pre id="out">Iniciando…</pre>
+  <script type="module">
+    const out = document.getElementById('out');
+    const linhas = [];
+    const log = (s) => { linhas.push(s); out.textContent = linhas.join('\n'); };
+    try {
+      const cfg = await import('./js/config.js');
+      log('1. js/config.js carregado.');
+      log('   CONFIG_ERROR: ' + (cfg.CONFIG_ERROR ? cfg.CONFIG_ERROR : 'nenhum (configuração válida)'));
+      if (cfg.CONFIG_ERROR) throw new Error('Corrija a configuração antes de prosseguir.');
+
+      // Aguarda a inicialização (config + SDK vendorizado) — corrige a corrida.
+      const client = await cfg.quandoPronto;
+      log('2. Cliente Supabase pronto (aguardado via quandoPronto).');
+
+      const sb = await import('./js/supabase.js');
+      log('3. js/supabase.js carregado. Símbolos exportados: ' + Object.keys(sb).length);
+
+      // Teste real de conexão + RLS (sem sessão: deve retornar 0 linhas, sem erro)
+      const { data, error } = await client.from('profiles').select('id').limit(1);
+      log('4. SELECT em profiles sem login: ' +
+        (error ? 'ERRO ' + (error.code || '') + ' — ' + error.message
+               : 'OK (RLS ativa). Linhas visíveis: ' + (data ? data.length : 0)));
+
+      // RPC administrativa sem sessão deve ser bloqueada (revoke do functions.sql)
+      const { error: errRpc } = await client.rpc('register_login');
+      log('5. RPC register_login sem sessão: ' +
+        (errRpc ? 'bloqueada como esperado (' + (errRpc.code || errRpc.message || 'erro') + ')'
+                : 'ATENÇÃO: respondeu sem sessão!'));
+
+      // js/auth.js deve carregar mesmo fora das páginas de autenticação
+      const auth = await import('./js/auth.js');
+      log('6. js/auth.js carregado. Símbolos exportados: ' + Object.keys(auth).length);
+
+      // js/charts.js: módulo de gráficos + contrato de estado vazio
+      const charts = await import('./js/charts.js');
+      log('7. js/charts.js carregado. Símbolos exportados: ' + Object.keys(charts).length);
+      log('   graficoBarrasMensais([]) sem dados -> ' +
+        (charts.graficoBarrasMensais([]) === null ? 'null (estado vazio, correto)' : 'FALHO: deveria ser null'));
+
+      // js/api.js (Fase 5-B): regras financeiras do cliente
+      const api = await import('./js/api.js');
+      log('8. js/api.js carregado. Símbolos exportados: ' + Object.keys(api).length);
+      const previa = api.preverParcelas(10000, 3, '2026-01-31'); // R$ 100,00 em 3x
+      log('   100,00 / 3 -> ' + previa.parcelas.map(p => p.valor.toFixed(2)).join(' / ') +
+          ' (soma ' + (previa.somaCentavos / 100).toFixed(2) + ')');
+      log('   âncora dia 31: 31/01 -> ' + previa.parcelas[1].vencimento.split('-').reverse().join('/') +
+          ' -> ' + previa.parcelas[2].vencimento.split('-').reverse().join('/'));
+      log('   bissexto: 31/01/2024 -> 3ª parcela = ' +
+          api.preverParcelas(100, 3, '2024-01-31').parcelas[2].vencimento);
+    } catch (e) {
+      log('ERRO: ' + (e && e.message ? e.message : String(e)));
+    }
+    log('— FIM DO DIAGNÓSTICO —');
+  </script>
+</body>
+</html>

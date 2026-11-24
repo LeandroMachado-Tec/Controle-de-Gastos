@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script src="./js/theme-preload.js"></script>
+  <meta name="theme-color" content="#0f6b54">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="description" content="Configurações do Controle de Gastos: perfil, aparência e sessão.">
+  <title>Configurações — Controle de Gastos</title>
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/navegacao.js" defer></script>
+</head>
+<body data-pagina="configuracoes">
+
+  <a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="app">
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <header class="app-cabecalho">
+      <a class="marca marca-cabecalho" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="usuario-chip" id="usuario-chip" hidden>
+        <span class="avatar" id="usuario-inicial" aria-hidden="true">?</span>
+        <span class="dados">
+          <span class="nome" id="usuario-nome">Carregando…</span>
+          <span class="papel" id="usuario-papel"></span>
+        </span>
+      </div>
+
+      <div class="acoes-cabecalho">
+        <!-- Mesmo mecanismo de tema do restante do app (data-theme + localStorage). -->
+        <button type="button" id="btn-tema" class="botao-icone"
+                disabled data-aguardando="js/configuracoes.js"
+                aria-label="Alternar tema claro/escuro" title="Alternar tema">
+          <span class="icone icone-tema" aria-hidden="true"></span>
+          <span class="rotulo-botao">Tema</span>
+        </button>
+        <button type="button" id="btn-sair" class="botao-icone"
+                disabled data-aguardando="js/configuracoes.js"
+                aria-label="Sair da conta">
+          <span class="icone icone-sair" aria-hidden="true"></span>
+          <span class="rotulo-botao">Sair</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== NAVEGAÇÃO LATERAL (desktop) ===================== -->
+    <nav class="navegacao-lateral" aria-label="Menu principal">
+      <a class="marca marca-lateral" href="dashboard.html">
+        <img class="marca-logo" src="./icons/marca-machado.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="marca-texto">
+          <span class="marca-nome">Controle de Gastos</span>
+        </span>
+      </a>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Principal</p>
+        <a class="item-nav" href="dashboard.html">
+          <span class="icone icone-painel" aria-hidden="true"></span> Painel
+        </a>
+        <a class="item-nav" href="dividas.html">
+          <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+        </a>
+        <a class="item-nav" href="gastos.html">
+          <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+        </a>
+        <a class="item-nav" href="parcelas.html">
+          <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+        </a>
+      </div>
+
+      <div class="nav-grupo">
+        <p class="nav-grupo-titulo">Organização</p>
+        <a class="item-nav" href="calendario.html">
+          <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+        </a>
+        <a class="item-nav" href="historico.html">
+          <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+        </a>
+        <a class="item-nav ativo" href="configuracoes.html" aria-current="page">
+          <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+        </a>
+      </div>
+
+      <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+      <div class="nav-grupo" id="nav-admin-lateral"></div>
+
+      <div class="nav-rodape">
+        <p class="rodape-nav">E-mail, status e papel são gerenciados pelo sistema.</p>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTEÚDO ===================== -->
+    <main class="conteudo" id="conteudo">
+      <h1 class="titulo-pagina">Configurações</h1>
+      <p class="subtitulo-pagina">Perfil, aparência e sessão da sua conta.</p>
+
+      <!-- Estado de erro global -->
+      <div id="estado-erro-global" class="estado-erro" hidden>
+        <span class="icone-estado" aria-hidden="true"></span>
+        <p class="titulo-estado">Não foi possível carregar suas configurações</p>
+        <p id="erro-mensagem"></p>
+        <button type="button" class="botao-secundario" id="btn-tentar-novamente"
+                disabled data-aguardando="js/configuracoes.js">Tentar novamente</button>
+      </div>
+
+      <!-- ===================== PERFIL (editável: nome e fuso) ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-perfil">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-perfil">Perfil</h2>
+        </div>
+        <div class="painel-corpo">
+          <p id="mensagem-perfil" class="mensagem" role="alert" hidden></p>
+
+          <form id="form-perfil" novalidate>
+            <div class="campo">
+              <label for="campo-nome">Nome completo</label>
+              <input type="text" id="campo-nome" maxlength="120" required
+                     placeholder="Seu nome completo" autocomplete="name">
+              <p class="dica-campo">2 a 120 caracteres.</p>
+            </div>
+
+            <div class="campo">
+              <label for="campo-fuso">Fuso horário</label>
+              <!-- Fusos IANA reais; o valor salvo vai para profiles.timezone,
+                   usado por app_today() no banco (atrasos, "hoje", competências). -->
+              <select id="campo-fuso">
+                <option value="America/Noronha">America/Noronha (Fernando de Noronha, UTC-2)</option>
+                <option value="America/Sao_Paulo">America/Sao_Paulo (Brasília, UTC-3)</option>
+                <option value="America/Bahia">America/Bahia (Salvador, UTC-3)</option>
+                <option value="America/Fortaleza">America/Fortaleza (UTC-3)</option>
+                <option value="America/Recife">America/Recife (UTC-3)</option>
+                <option value="America/Belem">America/Belem (UTC-3)</option>
+                <option value="America/Maceio">America/Maceio (UTC-3)</option>
+                <option value="America/Araguaina">America/Araguaina (UTC-3)</option>
+                <option value="America/Cuiaba">America/Cuiaba (UTC-4)</option>
+                <option value="America/Campo_Grande">America/Campo_Grande (UTC-4)</option>
+                <option value="America/Manaus">America/Manaus (UTC-4)</option>
+                <option value="America/Porto_Velho">America/Porto_Velho (UTC-4)</option>
+                <option value="America/Boa_Vista">America/Boa_Vista (UTC-4)</option>
+                <option value="America/Rio_Branco">America/Rio_Branco (UTC-5)</option>
+                <option value="UTC">UTC</option>
+              </select>
+              <p class="dica-campo" id="aviso-fuso" hidden>
+                <strong>Atenção:</strong> ao salvar, o sistema passará a calcular “hoje”,
+                vencimentos e atrasos neste fuso. Datas já cadastradas não são movidas.
+              </p>
+            </div>
+
+            <div class="modal-acoes" style="justify-content:flex-start">
+              <button type="submit" class="botao" id="btn-salvar-perfil"
+                      disabled data-aguardando="js/configuracoes.js">Salvar perfil</button>
+              <button type="button" class="botao-secundario" id="btn-restaurar-perfil"
+                      disabled data-aguardando="js/configuracoes.js" hidden>Desfazer alterações</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===================== CONTA (somente leitura) ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-conta">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-conta">Conta</h2>
+          <span id="conta-status" class="etiqueta" role="status"></span>
+        </div>
+        <div class="painel-corpo">
+          <p class="dica-campo" style="margin-bottom:var(--esp-3)">
+            Estes dados são gerenciados pelo sistema e não podem ser alterados aqui.
+          </p>
+          <div class="tabela-responsiva">
+            <table>
+              <caption class="sr-only">Dados da conta</caption>
+              <tbody>
+                <tr><td data-label="E-mail" id="conta-email">—</td></tr>
+                <tr><td data-label="Papel" id="conta-papel">—</td></tr>
+                <tr><td data-label="Conta criada em" id="conta-criada">—</td></tr>
+                <tr><td data-label="Último acesso" id="conta-ultimo-acesso">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== APARÊNCIA ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-aparencia">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-aparencia">Aparência</h2>
+        </div>
+        <div class="painel-corpo">
+          <fieldset>
+            <legend>Tema</legend>
+            <div class="campo">
+              <label class="opcao-radio">
+                <input type="radio" name="tema" value="auto" disabled
+                       data-aguardando="js/configuracoes.js"> Automático (segue o sistema)
+              </label>
+              <label class="opcao-radio">
+                <input type="radio" name="tema" value="claro" disabled
+                       data-aguardando="js/configuracoes.js"> Claro
+              </label>
+              <label class="opcao-radio">
+                <input type="radio" name="tema" value="escuro" disabled
+                       data-aguardando="js/configuracoes.js"> Escuro
+              </label>
+              <p class="dica-campo">A escolha fica salva neste dispositivo (preferência de aparência, não dado financeiro).</p>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <!-- ===================== SESSÃO ===================== -->
+      <section class="cartao-painel" aria-labelledby="titulo-sessao">
+        <div class="painel-cabecalho">
+          <h2 class="painel-titulo" id="titulo-sessao">Sessão</h2>
+        </div>
+        <div class="painel-corpo">
+          <p class="dica-campo" style="margin-bottom:var(--esp-3)">
+            Encerra a sessão neste dispositivo. Seus dados continuam salvos no banco.
+          </p>
+          <button type="button" class="botao-perigo" id="btn-encerrar-sessao"
+                  disabled data-aguardando="js/configuracoes.js">Sair da conta</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== NAVEGAÇÃO INFERIOR (celular) ===================== -->
+    <nav class="navegacao-inferior" aria-label="Menu principal">
+      <a class="item-nav" href="dashboard.html">
+        <span class="icone icone-painel" aria-hidden="true"></span> Painel
+      </a>
+      <a class="item-nav" href="dividas.html">
+        <span class="icone icone-dividas" aria-hidden="true"></span> Dívidas
+      </a>
+      <a class="item-nav" href="gastos.html">
+        <span class="icone icone-gastos" aria-hidden="true"></span> Gastos
+      </a>
+      <a class="item-nav" href="parcelas.html">
+        <span class="icone icone-parcelas" aria-hidden="true"></span> Parcelas
+      </a>
+      <button type="button" id="btn-mais" class="item-nav"
+              aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-mais">
+        <span class="icone icone-mais" aria-hidden="true"></span> Mais
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== FOLHA "MAIS" (celular) ===================== -->
+  <div class="menu-mais-fundo" id="menu-mais" hidden>
+    <div class="menu-mais" role="dialog" aria-modal="true" aria-labelledby="titulo-menu-mais">
+      <div class="menu-mais-cabecalho">
+        <h2 id="titulo-menu-mais">Mais</h2>
+        <button type="button" id="btn-fechar-mais" class="botao-icone" aria-label="Fechar menu">
+          <span class="icone icone-fechar" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul class="menu-mais-lista">
+        <li>
+          <a class="item-nav" href="calendario.html">
+            <span class="icone icone-calendario" aria-hidden="true"></span> Calendário
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="historico.html">
+            <span class="icone icone-historico" aria-hidden="true"></span> Histórico
+          </a>
+        </li>
+        <li>
+          <a class="item-nav" href="configuracoes.html">
+            <span class="icone icone-configuracoes" aria-hidden="true"></span> Configurações
+          </a>
+        </li>
+        <!-- Administração: preenchida por js/navegacao.js apenas para papel admin. -->
+        <li id="menu-mais-admin"></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Toasts de feedback -->
+  <div class="area-toasts" id="area-toasts" aria-live="polite"></div>
+
+  <noscript>
+    <p style="max-width:600px;margin:16px auto;text-align:center;font-family:system-ui,sans-serif">
+      Este sistema precisa de JavaScript habilitado para carregar seus dados com segurança.
+    </p>
+  </noscript>
+
+  <!-- Credenciais públicas antes dos módulos (caminho 1 de js/config.js) -->
+  <script src="./js/config.local.js"></script>
+
+  <!--
+  =============================================================================
+  js/configuracoes.js — contratos reais utilizados:
+    requireAuth() → { user, perfil }                         [js/supabase.js]
+    salvarPerfil({ full_name?, timezone? }) → linha atualizada de profiles
+      (whitelist real: SOMENTE full_name e timezone; o trigger
+       trg_profiles_protect_columns bloqueia e-mail/status/role no banco)
+    logout('login.html') / normalizarErro()
+    Tema: data-theme no <html> + localStorage('theme') (mecanismo único do app;
+      'auto' remove o atributo e a chave, voltando a prefers-color-scheme)
+    app_today() (banco) lê profiles.timezone — por isso o aviso de fuso.
+  =============================================================================
+  -->
+  <script type="module" src="./js/configuracoes.js"></script>
+</body>
+</html>
